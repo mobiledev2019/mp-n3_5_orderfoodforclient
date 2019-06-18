@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="ipsv">10.0.0.2:8080</string>
+    <string name="ipsv">http://192.168.100.91:80</string>
     <string name="app_name">Quản lý nhà hàng</string>
     <string name="hello_world">Hello world!</string>
     <string name="huong_dan">Vui lòng chọn chức năng bên dưới:</string>

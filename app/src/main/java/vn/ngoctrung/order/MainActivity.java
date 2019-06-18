@@ -31,214 +31,205 @@ import android.view.View;
 import android.widget.EditText;
 
 public class MainActivity extends Activity {
+    private String TAG = "MainActivty";
+    List<String> so_ban_da_co = new ArrayList<String>();
+    InputStream is = null;
+    String line = null;
 
-	List<String> so_ban_da_co = new ArrayList<String>();
-	InputStream is = null;
-	String result = null;
-	String line = null;
+    /* Hàm xác nhận khi muốn thoát */
+    protected void doExit() {
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(
+                MainActivity.this);
+        alertDialog.setPositiveButton("Có", new OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                finish();
+                System.exit(0);
+            }
+        });
 
-	/* Hàm xác nhận khi muốn thoát */
-	protected void doExit() {
-		AlertDialog.Builder alertDialog = new AlertDialog.Builder(
-				MainActivity.this);
-		alertDialog.setPositiveButton("Có", new OnClickListener() {
-			public void onClick(DialogInterface dialog, int which) {
-				finish();
-				System.exit(0);
-			}
-		});
+        alertDialog.setNegativeButton("Không", null);
+        alertDialog.setMessage("Bạn có muốn thoát?");
+        alertDialog.setTitle("Quản lý nhà hàng");
+        alertDialog.show();
+    }
 
-		alertDialog.setNegativeButton("Không", null);
-		alertDialog.setMessage("Bạn có muốn thoát?");
-		alertDialog.setTitle("Quản lý nhà hàng");
-		alertDialog.show();
-	}
+    /* Hàm tạo Dialog hiện lên khi nhấn menu Thông tin */
+    protected void doDialog() {
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(
+                MainActivity.this);
+        alertDialog.setNegativeButton("OK", new OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
 
-	/* Hàm tạo Dialog hiện lên khi nhấn menu Thông tin */
-	protected void doDialog() {
-		AlertDialog.Builder alertDialog = new AlertDialog.Builder(
-				MainActivity.this);
-		alertDialog.setNegativeButton("OK", new OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				dialog.dismiss();
+            }
+        });
+        alertDialog.setMessage("Phần mềm quản lý nhà hàng với 3 chức năng chính là đặt món, sửa món và thanh toán.");
+        alertDialog.show();
+    }
 
-			}
-		});
-		alertDialog.setMessage("Phần mềm quản lý nhà hàng với 3 chức năng chính là đặt món, sửa món và thanh toán.");
-		alertDialog.show();
-	}
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+        new LoadSoBan().execute();
+    }
 
-		new LoadSoBan().execute();
-	}
+    // Tạo menu
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
 
-	// Tạo menu
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.menu, menu);
-		return super.onCreateOptionsMenu(menu);
-	}
+    // Khi menu được chọn
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.exit:
+                doExit(); // Gọi lại hàm xác nhận thoát
+                break;
+            case R.id.about:
+                doDialog();
+                break;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
-	// Khi menu được chọn
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case R.id.exit:
-			doExit(); // Gọi lại hàm xác nhận thoát
-			break;
-		case R.id.about:
-			doDialog();
-			break;
-		}
-		return super.onOptionsItemSelected(item);
-	}
+    // Khi ấn vào nút back trên màn hình
+    @Override
+    public void onBackPressed() {
+        doExit();
+    }
 
-	// Khi ấn vào nút back trên màn hình
-	@Override
-	public void onBackPressed() {
-		doExit();
-	}
+    public void Ham_Dat_Mon(View v) {
+        Intent i = new Intent(MainActivity.this, MenuActivity.class);
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        MainActivity.this.startActivity(i);
+    }
 
-	public void Ham_Dat_Mon(View v) {
-		Intent i = new Intent(MainActivity.this, MenuActivity.class);
-		i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-				| Intent.FLAG_ACTIVITY_CLEAR_TASK);
-		MainActivity.this.startActivity(i);
-	}
+    public void Ham_Tinh_Tien(View v) {
+        Intent i = new Intent(MainActivity.this, BillActivity.class);
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
-	public void Ham_Tinh_Tien(View v) {
-		Intent i = new Intent(MainActivity.this, BillActivity.class);
-		i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-				| Intent.FLAG_ACTIVITY_CLEAR_TASK);
-		
-		Bundle mybundle = new Bundle();
-		mybundle.putStringArrayList("so_ban_da_co", (ArrayList<String>) so_ban_da_co);
-		i.putExtra("my_bundle", mybundle);
-		MainActivity.this.startActivity(i);
-	}
-	public void Ham_Sua_Mon(View v) {
-		final EditText edt = new EditText(this);
-		edt.setInputType(InputType.TYPE_CLASS_NUMBER);
-		final AlertDialog dialog = new AlertDialog.Builder(this)
-				.setTitle("Quản lý nhà hàng")
-				.setMessage("Vui lòng nhập số bàn để sửa bill")
-				.setView(edt)
-				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						String so_ban = edt.getText().toString();
-						Intent i = new Intent(MainActivity.this,
-								ChangeMenuActivity.class);
-						i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-								| Intent.FLAG_ACTIVITY_CLEAR_TASK);
-						Bundle mybundle = new Bundle();
-						mybundle.putString("so_ban", so_ban);
-						i.putExtra("my_bundle", mybundle);
-						MainActivity.this.startActivity(i);
-					}
-				}).setNegativeButton("Hủy", null)
-				.setIcon(R.drawable.ic_launcher).show();
-		dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
-		edt.addTextChangedListener(new TextWatcher() {
+        Bundle mybundle = new Bundle();
+        mybundle.putStringArrayList("so_ban_da_co", (ArrayList<String>) so_ban_da_co);
+        i.putExtra("my_bundle", mybundle);
+        MainActivity.this.startActivity(i);
+    }
 
-			@Override
-			public void onTextChanged(CharSequence s, int start, int before,
-					int count) {
-				final String[] so_ban_da_co_spl = new String[so_ban_da_co.size()];
-				so_ban_da_co.toArray(so_ban_da_co_spl);
-				for(String x: so_ban_da_co_spl){
-					if(edt.getText().toString().equals(x)){
-						dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
-						edt.setError(null);
-						break;
-					}
-					else {
-						dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
-						edt.setError("Bàn số " + edt.getText().toString() + " chưa được đặt món");
-					}
-				}
-			}
+    public void Ham_Sua_Mon(View v) {
+        final EditText edt = new EditText(this);
+        edt.setInputType(InputType.TYPE_CLASS_NUMBER);
+        final AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Quản lý nhà hàng")
+                .setMessage("Vui lòng nhập số bàn để sửa bill")
+                .setView(edt)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        String so_ban = edt.getText().toString();
+                        Intent i = new Intent(MainActivity.this,
+                                ChangeMenuActivity.class);
+                        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                                | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        Bundle mybundle = new Bundle();
+                        mybundle.putString("so_ban", so_ban);
+                        i.putExtra("my_bundle", mybundle);
+                        MainActivity.this.startActivity(i);
+                    }
+                }).setNegativeButton("Hủy", null)
+                .setIcon(R.drawable.ic_launcher).show();
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+        edt.addTextChangedListener(new TextWatcher() {
 
-			@Override
-			public void beforeTextChanged(CharSequence s, int start, int count,
-					int after) {
-				dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
-			}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before,
+                                      int count) {
+                final String[] so_ban_da_co_spl = new String[so_ban_da_co.size()];
+                so_ban_da_co.toArray(so_ban_da_co_spl);
+                for (String x : so_ban_da_co_spl) {
+                    if (edt.getText().toString().equals(x)) {
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
+                        edt.setError(null);
+                        break;
+                    } else {
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+                        edt.setError("Bàn số " + edt.getText().toString() + " chưa được đặt món");
+                    }
+                }
+            }
 
-			@Override
-			public void afterTextChanged(Editable s) {
-				final String[] so_ban_da_co_spl = new String[so_ban_da_co.size()];
-				so_ban_da_co.toArray(so_ban_da_co_spl);
-				for(String x: so_ban_da_co_spl){
-					if(edt.getText().toString().equals(x)){
-						dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
-						edt.setError(null);
-						break;
-					}
-					else {
-						dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
-						edt.setError("Bàn số " + edt.getText().toString() + " chưa được đặt món");
-						
-					}
-				}
-				if(edt.getText().toString().equals("")){
-					edt.setError(null);
-				}
-			}
-		});
-	}
-	class LoadSoBan extends AsyncTask<String, String, String> {
-		@Override
-		protected String doInBackground(String... arg0) {
-			try {
-				HttpClient httpclient = new DefaultHttpClient();
-				HttpPost httppost = new HttpPost(
-						getString(R.string.ipsv)+"/qlnh/load_so_ban.php");
-				HttpResponse response = httpclient.execute(httppost);
-				HttpEntity entity = response.getEntity();
-				is = entity.getContent();
-				Log.e("pass1", "success");
-			} catch (Exception e) {
-				Log.e("fail1", e.toString());
-			}
-			try {
-				BufferedReader reader = new BufferedReader(
-						new InputStreamReader(is, "UTF-8"), 8);
-				StringBuilder sb = new StringBuilder();
-				while ((line = reader.readLine()) != null) {
-					sb.append(line + "\n");
-				}
-				is.close();
-				result = sb.toString();
-				Log.e("pass", "success");
-			} catch (Exception e) {
-				Log.e("fail", e.toString());
-			}
-			try {
-				JSONArray jArray = new JSONArray(result);
-				for (int i = 0; i < jArray.length(); i++) {
-					try {
-						JSONObject oneObject = jArray.getJSONObject(i);
-						so_ban_da_co.add(oneObject.getString("so_ban"));
-					} catch (Exception e) {
-						// Oops
-					}
-				}
-				Log.e("pass2", "success2");
-			} catch (Exception e) {
-				Log.e("fail2", e.toString());
-			}
-			return null;
-		}
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count,
+                                          int after) {
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+            }
 
-		protected void onPostExecute(String file_url) {
+            @Override
+            public void afterTextChanged(Editable s) {
+                final String[] so_ban_da_co_spl = new String[so_ban_da_co.size()];
+                so_ban_da_co.toArray(so_ban_da_co_spl);
+                for (String x : so_ban_da_co_spl) {
+                    if (edt.getText().toString().equals(x)) {
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
+                        edt.setError(null);
+                        break;
+                    } else {
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+                        edt.setError("Bàn số " + edt.getText().toString() + " chưa được đặt món");
 
-		}
+                    }
+                }
+                if (edt.getText().toString().equals("")) {
+                    edt.setError(null);
+                }
+            }
+        });
+    }
 
-	}
+    class LoadSoBan extends AsyncTask<String, String, String> {
+        @Override
+        protected String doInBackground(String... arg0) {
+            String result = "";
+            try {
+                HttpClient httpclient = new DefaultHttpClient();
+                HttpPost httppost = new HttpPost(
+                        getString(R.string.ipsv) + "/QLNH/load_so_ban.php");
+                HttpResponse response = httpclient.execute(httppost);
+                HttpEntity entity = response.getEntity();
+                is = entity.getContent();
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(is, "UTF-8"), 8);
+                StringBuilder sb = new StringBuilder();
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line + "\n");
+                }
+                is.close();
+                result = sb.toString();
+                Log.d(TAG, result);
+            } catch (Exception e) {
+                Log.e(TAG, e.toString());
+            }
+
+            return result;
+        }
+
+        protected void onPostExecute(String result) {
+            try {
+                JSONArray jArray = new JSONArray(result);
+                for (int i = 0; i < jArray.length(); i++) {
+                    JSONObject oneObject = jArray.getJSONObject(i);
+                    so_ban_da_co.add(oneObject.getString("so_ban"));
+                }
+                Log.d(TAG, "Json Success");
+            } catch (Exception e) {
+                Log.e(TAG, e.toString());
+            }
+        }
+
+    }
 
 }
